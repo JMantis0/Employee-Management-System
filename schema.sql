@@ -46,14 +46,14 @@ INSERT INTO role (title, salary, department_id)
 VALUES ("Clerk", 40000, 2);
 
 INSERT INTO employee (first_name, last_name, role_id, manager_id)
-VALUES ("James", "Monro", 1, 1);
+VALUES ("James", "Monro", 1, 7);
 INSERT INTO employee (first_name, last_name, role_id, manager_id)
-VALUES ("Willow", "Yu", 2, 1);
+VALUES ("Willow", "Yu", 2, 7);
 INSERT INTO employee (first_name, last_name, role_id, manager_id)
-VALUES ("Cammille", "Bassett", 3, 1);
+VALUES ("Cammille", "Bassett", 3, 7);
 INSERT INTO employee (first_name, last_name, role_id, manager_id)
-VALUES ("Miles", "Alford", 1, 1);
+VALUES ("Miles", "Alford", 1, 8);
 INSERT INTO employee (first_name, last_name, role_id, manager_id)
-VALUES ("Rafi", "Rose", 2, 2);
+VALUES ("Rafi", "Rose", 2, 8);
 INSERT INTO employee (first_name, last_name, role_id, manager_id)
-VALUES("Lilly-Mai", "Caldwell", 3, 2);
+VALUES("Lilly-Mai", "Caldwell", 3, 8);
