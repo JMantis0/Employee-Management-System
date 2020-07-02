@@ -39,21 +39,9 @@ VALUES ("Labor");
 INSERT INTO role (title, salary, department_id)
 VALUES ("Associate", 40000, 1);
 INSERT INTO role (title, salary, department_id)
-VALUES ("Manager", 70000, 1);
+VALUES ("Clerk", 70000, 1);
 INSERT INTO role (title, salary, department_id)
 VALUES ("Counsel", 120000, 2);
 INSERT INTO role (title, salary, department_id)
-VALUES ("Clerk", 40000, 2);
+VALUES ("Bailiff", 40000, 2);
 
-INSERT INTO employee (first_name, last_name, role_id, manager_id)
-VALUES ("James", "Monro", 1, 7);
-INSERT INTO employee (first_name, last_name, role_id, manager_id)
-VALUES ("Willow", "Yu", 2, 7);
-INSERT INTO employee (first_name, last_name, role_id, manager_id)
-VALUES ("Cammille", "Bassett", 3, 7);
-INSERT INTO employee (first_name, last_name, role_id, manager_id)
-VALUES ("Miles", "Alford", 1, 8);
-INSERT INTO employee (first_name, last_name, role_id, manager_id)
-VALUES ("Rafi", "Rose", 2, 8);
-INSERT INTO employee (first_name, last_name, role_id, manager_id)
-VALUES("Lilly-Mai", "Caldwell", 3, 8);
