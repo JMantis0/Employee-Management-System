@@ -1,5 +1,3 @@
-DROP DATABASE IF EXISTS employee_db;
-
 CREATE DATABASE employee_db;
 
 USE employee_db;
@@ -30,18 +28,3 @@ CREATE TABLE employee (
 	FOREIGN KEY (role_id) REFERENCES role (id),
 	FOREIGN KEY (manager_id) REFERENCES employee (id)
 );
-
-INSERT INTO department (name)
-VALUES ("Human Resources");
-INSERT INTO department (name)
-VALUES ("Labor");
-
-INSERT INTO role (title, salary, department_id)
-VALUES ("Associate", 40000, 1);
-INSERT INTO role (title, salary, department_id)
-VALUES ("Clerk", 70000, 1);
-INSERT INTO role (title, salary, department_id)
-VALUES ("Counsel", 120000, 2);
-INSERT INTO role (title, salary, department_id)
-VALUES ("Bailiff", 40000, 2);
-
