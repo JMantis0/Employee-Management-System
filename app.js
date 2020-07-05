@@ -4,7 +4,6 @@ const chalk = require ('chalk');
 const inq = require('inquirer');
 const util = require('util');
 const figlet = require('figlet');
-const { Separator } = require('inquirer');
 connection.query = util.promisify(connection.query);
 
 console.clear();
@@ -435,7 +434,7 @@ async function deleteData(data) {
       console.log('No employees deleted');
       await main();
     }
-    console.log(`------------------------------------------------------------------\nDeleted employees ${deletedEmployees}.`);
+    console.log(`--------------------------------------------------------------------\nDeleted employees ${deletedEmployees}.`);
     await main();
   }
 
@@ -484,7 +483,7 @@ async function deleteData(data) {
       console.log('No departments deleted');
       await main();
     }
-    console.log(`------------------------------------------------------------------\nDeleted the ${deletedDepartments} department${plural}.`);
+    console.log(`--------------------------------------------------------------------\nDeleted the ${deletedDepartments} department${plural}.`);
     await main();
   }
 
@@ -532,7 +531,7 @@ async function deleteData(data) {
       console.log('No roles deleted');
       await main();
     }
-    console.log(`------------------------------------------------------------------\nDeleted the ${deletedRoles} role${plural}.`);
+    console.log(`--------------------------------------------------------------------\nDeleted the ${deletedRoles} role${plural}.`);
     await main();
   }
 }
