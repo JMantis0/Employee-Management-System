@@ -11,10 +11,11 @@ This is a command-line content management system for Employee Data.
 1) Install node.js if you don't have it already.  Use the [package manager][] of your choice.
 2) Install MySQL Workbench if you don't have it already. Use [this][] page
 3) Set up a MySQL Connection with hostname `localhost` on port 3306.
-![mysql connection](./assets/images/mysql_newserver.JPG "Create MySQL Connection)
-4) Use schema from [schema.sql](./schema.sql) to set up your database tables
-5) Use [seeds.sql] to seed your database (or use your own data)
-6) On command line run these commands
+![mysql connection](./assets/images/mysql_newserver.JPG "Create MySQL Connection")
+4) On line 14 of [connection.js](./config/connection.js) enter your MySQL Connection password.
+5) Use schema from [schema.sql](./schema.sql) to set up your database tables
+6) Use [seeds.sql](/seeds.sql) to seed your database (or use your own data)
+7) On command line run these commands
 ```
 git clone https://github.com/JMantis0/Employee-Management-System ems
 cd ems
