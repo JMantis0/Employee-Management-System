@@ -4,7 +4,6 @@ const chalk = require ('chalk');
 const inq = require('inquirer');
 const util = require('util');
 const figlet = require('figlet');
-const { Separator } = require('inquirer');
 connection.query = util.promisify(connection.query);
 
 console.clear();
@@ -414,12 +413,17 @@ async function deleteData(data) {
         }
       }
     ]);
+
+    console.log(employees)
     const query = 'DELETE FROM employee WHERE id = ?';
+    removeEmpConstraints();
+
     employees.forEach((name) => {
       connection.query(query, list[name].id, (err) => {
         if (err) {throw err;}
       });
     });
+    replaceEmpConstraints();
     let deletedEmployees;
     if (employees.length === 1) {
       deletedEmployees = chalk.bold.magenta(employees[0]);
@@ -435,7 +439,7 @@ async function deleteData(data) {
       console.log('No employees deleted');
       await main();
     }
-    console.log(`------------------------------------------------------------------\nDeleted employees ${deletedEmployees}.`);
+    console.log(`--------------------------------------------------------------------\nDeleted employees ${deletedEmployees}.`);
     await main();
   }
 
@@ -484,7 +488,7 @@ async function deleteData(data) {
       console.log('No departments deleted');
       await main();
     }
-    console.log(`------------------------------------------------------------------\nDeleted the ${deletedDepartments} department${plural}.`);
+    console.log(`--------------------------------------------------------------------\nDeleted the ${deletedDepartments} department${plural}.`);
     await main();
   }
 
@@ -532,7 +536,7 @@ async function deleteData(data) {
       console.log('No roles deleted');
       await main();
     }
-    console.log(`------------------------------------------------------------------\nDeleted the ${deletedRoles} role${plural}.`);
+    console.log(`--------------------------------------------------------------------\nDeleted the ${deletedRoles} role${plural}.`);
     await main();
   }
 }
@@ -543,7 +547,7 @@ async function main() {
       type: 'list',
       name: 'action',
       message: `${chalk.bgYellow('                                                                  ')}\nSelect an action: `,
-      choices: ['View', 'Add', 'Update', new inq.Separator(), 'Delete', new inq.Separator, chalk.red('Quit')]
+      choices: ['View', 'Add', 'Update', new inq.Separator(), chalk.red('Quit')]
     },
     {
       type: 'list',
@@ -625,4 +629,36 @@ async function queryEmployee() {
 
 async function queryManagers() {
   return connection.query('SELECT t1.id, concat(t1.first_name, \' \', t1.last_name) as name, t2.title, t1.manager_id, concat(t1.id, \' \', t1.first_name, \' \', t1.last_name) as manager from employee t1 LEFT JOIN role t2 ON t2.id = t1.role_id  WHERE manager_id IS NULL');
+}
+
+async function removeEmpConstraints() {
+  connection.query('ALTER TABLE employee DROP CONSTRAINT employee_ibfk_1', function(err, result) {
+    if(err) {
+      console.log(err);
+    }
+    console.log(result);
+  });
+
+  connection.query('ALTER TABLE employee DROP CONSTRAINT employee_ibfk_2', function(err, result) {
+    if(err) {
+      console.log(err);
+    }
+    console.log(result);
+  });
+}
+
+async function replaceEmpConstraints() {
+  connection.query('ALTER TABLE employee ADD FOREIGN KEY (role_id) REFERENCES role(id)', function(err, result) {
+    if(err) {
+      console.log(err);
+    }
+    console.log(result);
+  });
+  connection.query('ALTER TABLE employee ADD FOREIGN KEY (manager_id) REFERENCES employee(id)', function(err, result) {
+    if(err) {
+      console.log(err);
+    }
+    console.log(result);
+  });
+
 }
