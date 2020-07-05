@@ -1,7 +1,7 @@
 
 # Employee Management System
 ![GitHub repo size](https://img.shields.io/github/repo-size/JMantis0/Employee-Management-System)  ![GitHub language count](https://img.shields.io/github/languages/count/JMantis0/Employee-Management-System)  ![GitHub top language](https://img.shields.io/github/languages/top/JMantis0/Employee-Management-System) 
- 
+
 ![title](./assets/images/title.JPG)
 
 ## Getting Started
@@ -29,7 +29,7 @@ node app.js
 
 ## Usage
 
-Select options from the menu using your keyboard.  You can view, add, update, and delete employee data.
+Select options from the menu using your keyboard.  You can view, add, and update employee data.
 ![usingtheapp](./assets/images/app.gif)
 
 ## Credits
