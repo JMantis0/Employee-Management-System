@@ -38,297 +38,66 @@ figlet('Employee', function(err, data) {
   });
 });
 
+// Function viewData takes uses data parameter in a switch to the proper query 
+async function viewData(data) {
+	let query;
+	if (data === 'Employees by Manager') {
+		console.log('Not Available Yet');
+    await main();
 
-//  Update Employee Role
-async function updateRole() {
-
-	let employeeData = await queryEmployee();
-  let roleData = [];
-  let roleID;
-  let oldRole;
-  let employeeArray = employeeData.map(packet => `${packet.id} ${packet.first_name} ${packet.last_name}`)
-
-
-	let uePrompt = [
-		{
-			type: 'list',
-			name: 'employee',
-			message: 'Select employee: ',
-			choices: employeeArray
-		},
-		{
-			type: 'list',
-			name: 'newRole',
-			message: function(input) {
-				for (packet of employeeData) {
-
-					if (packet.id.toString() === input.employee.split(' ')[0]) {
-            oldRole = `${packet.title}`;
-						return `${chalk.bold.magenta(packet.first_name)} ${chalk.bold.magenta(packet.last_name)}'s current role: ${chalk.bold.magenta(packet.title)}\n  ${chalk.bold.magenta(packet.first_name)}'s new role: `;
-					}
-				}
-				
-			},
-			choices: async function () {
-				roleData = await connection.query("SELECT id, title FROM role");
-        let choices = roleData.map(packet => `${packet.title}`);
-				return choices.filter(role => role !== oldRole);
-			}
-		}
-	];
-	let {employee, newRole} = await inq.prompt(uePrompt);
-  let empID = employee.split(" ")[0];
-  for (packet of roleData) {
-    if (packet.title === newRole) {
-      roleID = packet.id;
-    }
-  }
-	
-	employee = `${employee.split(" ")[1]} ${employee.split(" ")[2]}`; 
-
-
-	//  Update the record
-	connection.query(`UPDATE employee SET role_id = ? WHERE id = ?`, [roleID, empID], function(err, result) {
-		if (err) throw err;
+	}
+	switch(data) {
+		case('Departments'):
+		query = `SELECT id AS ID, name AS DEPARTMENT FROM department`;
+		console.log("--------------------------------------------------------------------");
+		break;
+		case('Employees'):
+		query = "SELECT t1.id AS ID, CONCAT(t1.first_name, ' ', t1.last_name) AS NAME, t3.title AS TITLE, t4.name AS DEPARTMENT, t3.salary AS SALARY, CONCAT(t2.first_name, ' ', t2.last_name) as MANAGER FROM employee t1 LEFT JOIN employee t2 ON t1.manager_id = t2.id LEFT JOIN role t3 ON t1.role_id = t3.id LEFT JOIN department t4 ON t3.department_id = t4.id ORDER BY t1.id";
+		console.log("--------------------------------------------------------------------\nEMPLOYEES\n--------------------------------------------------------------------");
+		break;
+		case('Roles'):
+		query = `SELECT DISTINCT t1.id AS ID, title AS TITLE, t3.name AS DEPARTMENT, salary AS SALARY FROM role t1 LEFT JOIN employee t2 ON t1.id = t2.role_id LEFT JOIN department t3 ON t1.department_id = t3.id`;
+		console.log("--------------------------------------------------------------------\nROLES\n--------------------------------------------------------------------");
+		break;
 		
-		console.log(`------------------------------------------------------------------\nEmployee role for ${chalk.bold.magenta(employee)} changed from ${chalk.bold.magenta(oldRole)} to ${chalk.bold.magenta(newRole)}`)
-		main();
-	});
+	}
+
+	connection.query(query, function(err, result) {
+    if (err) throw err;
+    console.log("query ********")
+		console.table(result);
+		main()
+	});	
+}
+
+// Function is to dipsplay employees by manager afte ruser chooses the manager
+function viewByManager() {
+  let managerData = queryManagers();
+  console.log(managerData)
 
 }
 
-async function updateManager() {
-	let oldManager;
-	let employeeData = [];
-	let managerData = [];
-	let {employee, newManager} = await inq.prompt([
-		{
-			type: 'list',
-			name: 'employee',
-			message: 'Choose employee: ',
-			choices: async function(input) {
-				let query = "SELECT t1.id, concat(t1.first_name, ' ', t1.last_name) as employee , concat(t2.first_name, ' ', t2.last_name) as manager FROM employee t1 LEFT JOIN employee t2 ON t1.manager_id = t2.id WHERE t1.manager_id IS NOT NULL";
-				employeeData = await connection.query(query);
-				return employeeData.map(packet => packet.employee);
-			}
-		},
-		{
-			type: 'list',
-			name: 'newManager',
-			message: function(input) {
-				// Assign selected employee's manager to variable manager
-				for (packet of employeeData) {
-					if (input.employee === packet.employee) {
-						oldManager = packet.manager;
-					}
-				}
-				return `${chalk.bold.magenta(input.employee)}'s current manager: ${chalk.bold.magenta(oldManager)}.\n  ${chalk.bold.magenta(input.employee.split(' ')[0])}'s new manager: `
-			},
-			choices: async function(input) {
-				let query = "SELECT t1.id, concat(t1.first_name, ' ', t1.last_name) as manager FROM employee t1 WHERE t1.manager_id IS NULL";
-				managerData = await connection.query(query);
-				let choices = managerData.map(packet => packet.manager);
-				// Return managers except the current
-				return choices.filter(x => x !== oldManager);
-			}
-		}
-	]);
-
-	//  Get id that corresponds with user choice
-	let employeeID;
-	for (packet of employeeData) {
-		if(employee === packet.employee) {
-			employeeID = packet.id;
-		}
-	}
-	//  Get manager_id that corresponds with user choice
-	let managerID;
-	for (packet of managerData) {
-		if(newManager === packet.manager) {
-			managerID = packet.id;
-		}
-	}
-
-	connection.query(`UPDATE employee SET manager_id = ? WHERE id = ?`, [managerID, employeeID], function(err, result) {
-		if (err) throw err;
-		
-		console.log(`------------------------------------------------------------------\nManager for ${chalk.bold.magenta(employee)} changed from ${chalk.bold.magenta(oldManager)} to ${chalk.bold.magenta(newManager)}.`)
-		main();
-	});
-}
-
-async function main() {
-	let mPrompt = [
-		{
-			type: 'list',
-			name: 'action',
-			message: `${chalk.bgYellow('                                                                  ')}\nSelect an action: `,
-			choices: ['View', 'Add', 'Update', chalk.red('Quit')]
-		},
-		{
-			type: 'list',
-			name: 'data',
-			message : function(input) {
-				switch(input.action) {
-					case "View":
-						return "------------------------------------------------------------------\nView: ";
-					case "Add":
-						return "------------------------------------------------------------------\nAdd: ";
-					case "Update":
-						return "------------------------------------------------------------------\nUpdate: ";
-					case chalk.red("Quit"):
-						return "------------------------------------------------------------------\nAre you sure you want to quit?";
-				}
-			},
-			choices: function(input) {
-				switch(input.action) {
-					case "Update":
-						return ['Employee role', 'Employee manager'];
-					case chalk.red("Quit"):
-						return ['Yes', 'No'];
-					default:
-						return ['Employees', 'Roles', 'Departments'];
-				}
-			}
-		}
-	];
-
-	let {action, data} = await inq.prompt(mPrompt);
-
-	if(data === "Yes") {
-		console.log("Goodbye!");
-		connection.end();
-		process.exit();
-	}
-	else if(data === "No") {
-		main();
-	}
-	else {
-		switch (action) {
-			case 'View':
-				viewData(data);
-				break;
-			case 'Add':
-				addData(data);
-				break;
-			case 'Update':
-				if (data === 'Employee role') {
-					updateRole();
-				}
-				else if (data === 'Employee manager') {
-					updateManager();
-				}
-				break;
-		}
+//  Function addData uses data param in a switch to call the proper add function
+function addData(data) {
+	let query;
+	switch(data) {
+		case('Departments'):
+		addDepartment();
+		break;
+		case('Employees'):
+		addEmployee();
+		break;
+		case('Roles'):
+		addRole();
+		break;
 	}
 }
 
-
-async function queryRole() {
-	return connection.query("SELECT id, concat(id, ' ', title) as role FROM role");
-}
-
-async function queryDepartment() {
-	return connection.query("SELECT DISTINCT name, id FROM department");
-}
-
-async function queryEmployee() {
-	return connection.query("SELECT t1.id, t2.id as role_id, t1.first_name, t1.last_name, t2.title FROM employee t1 LEFT JOIN role t2 ON t1.role_id = t2.id ORDER BY t1.id");
-}
-
-async function queryManagers() {
-
-	return connection.query("SELECT id, concat(first_name, ' ', last_name) as name, concat(id, ' ', first_name, ' ', last_name) as manager from employee WHERE manager_id IS NULL");
-
-}
-
-//  Function addDepartments prompts user with inquirer.
-//  Then uses a mysql connection to insert values from inquirer results
-//  into the department table of the employee_db database.
-async function addDepartment() {
-	let dPrompt = [
-		{
-			type: 'input',
-			name: 'department',
-			message: 'Enter a new department to add: ',
-		}
-	];
-
-	let {department} = await inq.prompt(dPrompt);
-	let queryString = `INSERT INTO department (name) VALUES (?)`
-	connection.query(queryString, department, function(err, results) {
-		if (err) throw err;
-		console.log(`--------------------------------------------------------------------\nThe ${chalk.bold.magenta(department)} department has been added.`);
-		main();
-	});
-}
-
-
-//  Function addRole uses mysql connection to query the already
-//  existing departments and assigns them to an array.
+//  Function addEmployee uses mysql connection to query the already
+//  existing data and assigns them to an array.
 //  Then the user is prompted with inquirer.
 //  Finally the inquirer results are used to query and insert
-//  The new role data into the role table on employee_db
-
-
-async function addRole() {
-	let departmentData = await queryDepartment();
-	let departmentArray = [];
-	departmentData.forEach(function(packet) {
-		departmentArray.push(packet.name);
-	});
-
-	let rPrompt = [
-		{
-			type: 'input',
-			name: 'role',
-			message: 'Title: ',
-		},
-		{
-			type: 'input',
-			name: 'salary',
-			message: function(input) {
-				return `Salary: `
-			},
-			validate: function (input) {
-				var done = this.async();
-				if(isNaN(parseInt(input)) || isNaN(Number(input))) {
-					done('Enter a number');
-					return;
-				}
-				done(null, true);
-			}
-		},
-		{
-			type: 'list',
-			name: 'department',
-			message: 'Department: ',
-			choices: departmentArray
-		}
-	];
-	console.log("--------------------------------------------------------------------\nEnter new role: ")
-
-	// Call Inquirer and deconstruct answers into variables
-	let {role, salary, department} = await inq.prompt(rPrompt);
-	let deptID;
-	for(let i = 0; i < departmentData.length; i++) {
-		if(departmentData[i].name === department) {
-			deptID = departmentData[i].id;
-		}
-	}
-
-	let queryString = `INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)`;
-	connection.query(queryString, [role, salary, deptID], function(err, results) {
-		if (err) throw err;
-	
-		console.log(`--------------------------------------------------------------------\nNew role ${chalk.bold.magenta(role)} added to the ${chalk.bold.magenta(department)} department, \nwith a salary of $${chalk.bold.green(salary)}.`);
-		main();
-	});
-}
-
-
-//  Function add employee
-
+//  new employee data into the employee table on employee_db
 async function addEmployee() {
 	let managerData = await queryManagers();
 	let managerArray = managerData.map(packet => packet.name);
@@ -414,48 +183,293 @@ async function addEmployee() {
 	})
 }
 
+//  Function addRole uses mysql connection to query the already
+//  existing departments and assigns them to an array.
+//  Then the user is prompted with inquirer.
+//  Finally the inquirer results are used to query and insert
+//  The new role data into the role table on employee_db
+async function addRole() {
+	let departmentData = await queryDepartment();
+	let departmentArray = [];
+	departmentData.forEach(function(packet) {
+		departmentArray.push(packet.name);
+	});
 
-// View Data
-async function viewData(data) {
-	let query;
-	if (data === 'Employees by Manager') {
-		console.log('Not Available Yet');
-		main();
-	}
-	switch(data) {
-		case('Departments'):
-		query = `SELECT id AS ID, name AS DEPARTMENT FROM department`;
-		console.log("--------------------------------------------------------------------");
-		break;
-		case('Employees'):
-		query = "SELECT t1.id AS ID, CONCAT(t1.first_name, ' ', t1.last_name) AS NAME, t3.title AS TITLE, t4.name AS DEPARTMENT, t3.salary AS SALARY, CONCAT(t2.first_name, ' ', t2.last_name) as MANAGER FROM employee t1 LEFT JOIN employee t2 ON t1.manager_id = t2.id LEFT JOIN role t3 ON t1.role_id = t3.id LEFT JOIN department t4 ON t3.department_id = t4.id ORDER BY t1.id";
-		console.log("--------------------------------------------------------------------\nEMPLOYEES\n--------------------------------------------------------------------");
-		break;
-		case('Roles'):
-		query = `SELECT DISTINCT t1.id AS ID, title AS TITLE, t3.name AS DEPARTMENT, salary AS SALARY FROM role t1 LEFT JOIN employee t2 ON t1.id = t2.role_id LEFT JOIN department t3 ON t1.department_id = t3.id`;
-		console.log("--------------------------------------------------------------------\nROLES\n--------------------------------------------------------------------");
-		break;
-		
+	let rPrompt = [
+		{
+			type: 'input',
+			name: 'role',
+			message: 'Title: ',
+		},
+		{
+			type: 'input',
+			name: 'salary',
+			message: function(input) {
+				return `Salary: `
+			},
+			validate: function (input) {
+				var done = this.async();
+				if(isNaN(parseInt(input)) || isNaN(Number(input))) {
+					done('Enter a number');
+					return;
+				}
+				done(null, true);
+			}
+		},
+		{
+			type: 'list',
+			name: 'department',
+			message: 'Department: ',
+			choices: departmentArray
+		}
+	];
+	console.log("--------------------------------------------------------------------\nEnter new role: ")
+
+	// Call Inquirer and deconstruct answers into variables
+	let {role, salary, department} = await inq.prompt(rPrompt);
+	let deptID;
+	for(let i = 0; i < departmentData.length; i++) {
+		if(departmentData[i].name === department) {
+			deptID = departmentData[i].id;
+		}
 	}
 
-	connection.query(query, function(err, result) {
+	let queryString = `INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)`;
+	connection.query(queryString, [role, salary, deptID], function(err, results) {
 		if (err) throw err;
-		console.table(result);
-		main()
-	});	
+	
+		console.log(`--------------------------------------------------------------------\nNew role ${chalk.bold.magenta(role)} added to the ${chalk.bold.magenta(department)} department, \nwith a salary of $${chalk.bold.green(salary)}.`);
+		main();
+	});
 }
 
-function addData(data) {
-	let query;
-	switch(data) {
-		case('Departments'):
-		addDepartment();
-		break;
-		case('Employees'):
-		addEmployee();
-		break;
-		case('Roles'):
-		addRole();
-		break;
+
+//  Function addDepartment prompts user with inquirer.
+//  Then uses a mysql connection to insert values from inquirer results
+//  into the department table of the employee_db database.
+async function addDepartment() {
+	let dPrompt = [
+		{
+			type: 'input',
+			name: 'department',
+			message: 'Enter a new department to add: ',
+		}
+	];
+
+	let {department} = await inq.prompt(dPrompt);
+	let queryString = `INSERT INTO department (name) VALUES (?)`
+	connection.query(queryString, department, function(err, results) {
+		if (err) throw err;
+		console.log(`--------------------------------------------------------------------\nThe ${chalk.bold.magenta(department)} department has been added.`);
+		main();
+	});
+}
+
+
+//  Update Employee Role
+async function updateRole() {
+
+	let employeeData = await queryEmployee();
+  let roleData = [];
+  let roleID;
+  let oldRole;
+  let employeeArray = employeeData.map(packet => `${packet.id} ${packet.first_name} ${packet.last_name}`)
+
+
+	let uePrompt = [
+		{
+			type: 'list',
+			name: 'employee',
+			message: 'Select employee: ',
+			choices: employeeArray
+		},
+		{
+			type: 'list',
+			name: 'newRole',
+			message: function(input) {
+				for (packet of employeeData) {
+
+					if (packet.id.toString() === input.employee.split(' ')[0]) {
+            oldRole = `${packet.title}`;
+						return `${chalk.bold.magenta(packet.first_name)} ${chalk.bold.magenta(packet.last_name)}'s current role: ${chalk.bold.magenta(packet.title)}\n  ${chalk.bold.magenta(packet.first_name)}'s new role: `;
+					}
+				}
+				
+			},
+			choices: async function () {
+				roleData = await connection.query("SELECT id, title FROM role");
+        let choices = roleData.map(packet => `${packet.title}`);
+				return choices.filter(role => role !== oldRole);
+			}
+		}
+	];
+	let {employee, newRole} = await inq.prompt(uePrompt);
+  let empID = employee.split(" ")[0];
+  for (packet of roleData) {
+    if (packet.title === newRole) {
+      roleID = packet.id;
+    }
+  }
+	
+	employee = `${employee.split(" ")[1]} ${employee.split(" ")[2]}`; 
+
+
+	//  Update the record
+	connection.query(`UPDATE employee SET role_id = ? WHERE id = ?`, [roleID, empID], function(err, result) {
+		if (err) throw err;
+		
+		console.log(`------------------------------------------------------------------\nEmployee role for ${chalk.bold.magenta(employee)} changed from ${chalk.bold.magenta(oldRole)} to ${chalk.bold.magenta(newRole)}`)
+		main();
+	});
+
+}
+
+// function updateManager() displays assigns a new manager to a non-management employee
+async function updateManager() {
+	let oldManager;
+	let employeeData = [];
+	let managerData = [];
+	let {employee, newManager} = await inq.prompt([
+		{
+			type: 'list',
+			name: 'employee',
+			message: 'Choose employee: ',
+			choices: async function(input) {
+				let query = "SELECT t1.id, concat(t1.first_name, ' ', t1.last_name) as employee , concat(t2.first_name, ' ', t2.last_name) as manager FROM employee t1 LEFT JOIN employee t2 ON t1.manager_id = t2.id WHERE t1.manager_id IS NOT NULL";
+				employeeData = await connection.query(query);
+				return employeeData.map(packet => packet.employee);
+			}
+		},
+		{
+			type: 'list',
+			name: 'newManager',
+			message: function(input) {
+				// Assign selected employee's manager to variable manager
+				for (packet of employeeData) {
+					if (input.employee === packet.employee) {
+						oldManager = packet.manager;
+					}
+				}
+				return `${chalk.bold.magenta(input.employee)}'s current manager: ${chalk.bold.magenta(oldManager)}.\n  ${chalk.bold.magenta(input.employee.split(' ')[0])}'s new manager: `
+			},
+			choices: async function(input) {
+				let query = "SELECT t1.id, concat(t1.first_name, ' ', t1.last_name) as manager FROM employee t1 WHERE t1.manager_id IS NULL";
+				managerData = await connection.query(query);
+				let choices = managerData.map(packet => packet.manager);
+				// Return managers except the current
+				return choices.filter(x => x !== oldManager);
+			}
+		}
+	]);
+
+	//  Get id that corresponds with user choice
+	let employeeID;
+	for (packet of employeeData) {
+		if(employee === packet.employee) {
+			employeeID = packet.id;
+		}
 	}
+	//  Get manager_id that corresponds with user choice
+	let managerID;
+	for (packet of managerData) {
+		if(newManager === packet.manager) {
+			managerID = packet.id;
+		}
+	}
+
+	connection.query(`UPDATE employee SET manager_id = ? WHERE id = ?`, [managerID, employeeID], function(err, result) {
+		if (err) throw err;
+		
+		console.log(`------------------------------------------------------------------\nManager for ${chalk.bold.magenta(employee)} changed from ${chalk.bold.magenta(oldManager)} to ${chalk.bold.magenta(newManager)}.`)
+		main();
+	});
+}
+
+async function main() {
+	let mPrompt = [
+		{
+			type: 'list',
+			name: 'action',
+			message: `${chalk.bgYellow('                                                                  ')}\nSelect an action: `,
+			choices: ['View', 'Add', 'Update', chalk.red('Quit')]
+		},
+		{
+			type: 'list',
+			name: 'data',
+			message : function(input) {
+				switch(input.action) {
+					case "View":
+						return "------------------------------------------------------------------\nView: ";
+					case "Add":
+						return "------------------------------------------------------------------\nAdd: ";
+					case "Update":
+						return "------------------------------------------------------------------\nUpdate: ";
+					case chalk.red("Quit"):
+						return "------------------------------------------------------------------\nAre you sure you want to quit?";
+				}
+			},
+			choices: function(input) {
+				switch(input.action) {
+          case "View":
+            return ['Employees', 'Employees by Manager', 'Roles', 'Departments'];
+          case "Add":
+            return ['Employees', 'Roles', 'Departments']
+					case "Update":
+						return ['Employee role', 'Employee manager'];
+					case chalk.red("Quit"):
+						return ['Yes', 'No'];
+				}
+			}
+		}
+	];
+
+	let {action, data} = await inq.prompt(mPrompt);
+  console.log("data: ***" ,data);
+	if(data === "Yes") {
+		console.log("Goodbye!");
+		connection.end();
+		process.exit();
+	}
+	else if(data === "No") {
+    console.log("Line 432");
+		main();
+	}
+	else {
+		switch (action) {
+			case 'View':
+				viewData(data);
+				break;
+			case 'Add':
+				addData(data);
+				break;
+			case 'Update':
+				if (data === 'Employee role') {
+					updateRole();
+				}
+				else if (data === 'Employee manager') {
+					updateManager();
+        }
+
+				break;
+		}
+	}
+}
+
+//  Reusable queries
+async function queryRole() {
+	return connection.query("SELECT id, concat(id, ' ', title) as role FROM role");
+}
+
+async function queryDepartment() {
+	return connection.query("SELECT DISTINCT name, id FROM department");
+}
+
+async function queryEmployee() {
+	return connection.query("SELECT t1.id, t2.id as role_id, t1.first_name, t1.last_name, t2.title FROM employee t1 LEFT JOIN role t2 ON t1.role_id = t2.id ORDER BY t1.id");
+}
+
+async function queryManagers() {
+
+	return connection.query("SELECT id, concat(first_name, ' ', last_name) as name, concat(id, ' ', first_name, ' ', last_name) as manager from employee WHERE manager_id IS NULL");
+
 }
